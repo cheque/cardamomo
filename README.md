@@ -12,7 +12,7 @@ Para este desarrollo, se utilizaron tecnologías enfocadas en la programación y
 
 En este repositorio encontrarás:
 
-**1. Librería Cardamomo:** Archivo `cardamomo.js` el cual contiene los siguientes métodos para visualización de datos:
+**1. Librería VDA:** Archivo `vda.js` el cual contiene los siguientes métodos para visualización de datos:
   * **drawViewPort** - Método para iniciar el viewPort del canvas.
   * **drawXAxis** - Método para graficar un eje horizontal con base en los parámetros inicio, fin y tamaño de paso.
   * **drawYAxis** - Método para graficar un eje vertical con base en los parámetros inicio, fin y tamaño de paso.
