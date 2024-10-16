@@ -7,9 +7,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const height = 10000;
   const context = initViewport('miCanvas', width, height);
 
-  const title = "";
+  const title = "Título de ejemplo";
   const canvasPadding = 50;
   const angleText = 0;
-  drawText(context,"Título de ejemplo", width/2 + canvasPadding ,height - canvasPadding, 50 ,"darkcyan",- angleText)
+  const size = 50;
+  const color = "darkcyan" ;
+  drawText(context,title, width/2 + canvasPadding ,height - canvasPadding, size ,color,- angleText)
 
 });
