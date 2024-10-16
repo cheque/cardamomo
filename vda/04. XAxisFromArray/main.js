@@ -1,5 +1,5 @@
 
-import { initViewport, drawXAxisFromArray, loadCSV } from '../vda.js';
+import { initViewport, drawXAxisWithIntervals, loadCSV } from '../vda.js';
 
 // Función principal para inicializar el canvas y dibujar el eje X
 async function init() {
@@ -21,9 +21,11 @@ async function init() {
     const color = "black";
     const labelSpace = 20;
     const canvasPadding = 50
+    const xLabelTextAngle = 0;
+    const interval = 0;
     
     // Llamar a la función para dibujar el eje X
-    drawXAxisFromArray(context, xValues , xPos, yPos, color, labelSpace,canvasPadding);
+    drawXAxisWithIntervals(context, xValues , xPos, yPos, xLabelTextAngle, color, labelSpace, canvasPadding, interval);
 }
 
 // Llama a la función principal para inicializar todo

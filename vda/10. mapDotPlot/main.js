@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const mapDataFile = "/data/states.geojson"
 
   //Carga de datos desde CSV
-  const csvFilePath  = "/data/puntos_mapa.csv";
+  const filePath  = "/data/puntos_mapa.csv";
 
   //Parametros para la gráfica
   const longitudeColumnName = "longitud"
@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const filledCircles = true;
   const pointRadius = 7;
 
-  drawMapDotPlot(canvas, context, mapDataFile, csvFilePath, longitudeColumnName, latitudeColumnName, infoColumnNames, color, filledCircles, pointRadius, canvasPadding)
+  drawMapDotPlot(canvas, context, mapDataFile, filePath, longitudeColumnName, latitudeColumnName, infoColumnNames, color, filledCircles, pointRadius, canvasPadding)
 
   const xPos =  width/2 - 8*canvasPadding ;
   const yPos = height -canvasPadding;

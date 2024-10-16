@@ -19,11 +19,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const variableName = 'urbanizacion'; // Nombre de la columna en el CSV
   //const variableName = 'poblacion'; // Nombre de la columna en el CSV
   //const variableName = 'temperatura'; // Nombre de la columna en el CSV
+  const baseColor = "purple"
   const stateNameProperty = "state_name"; //nombre de la propiedad en el archivo geojson
   const linkNameProperty = "nombre"; //nombre de la columna con la que se comparará el stateNameProperty 
   let infoColumnNames = ["nombre", "temperatura", "poblacion", "urbanizacion"];
 
-  drawHeatMap(canvas, canvasPadding, mapDataFile, csvFilePath, variableName, "purple", stateNameProperty, linkNameProperty, infoColumnNames);
+  drawHeatMap(canvas, canvasPadding, mapDataFile, csvFilePath, variableName, baseColor, stateNameProperty, linkNameProperty, infoColumnNames);
 
   const xPos =  width/2 - 4*canvasPadding ;
   const yPos = height -canvasPadding;

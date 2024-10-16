@@ -1,5 +1,5 @@
 /*
-  * Junio 2024
+  * Julio 2024
   * Autor: García Aguilar Luis Alberto
 */
 
@@ -94,12 +94,13 @@ export function drawYAxis(context, startY, endY, xPos, yPos, step, color = 'blac
  * @param {Array[Object]} xValues - Array de datos 1xn
  * @param {number} xPos - Posición X inicial en el canvas.
  * @param {number} yPos - Posición Y en el canvas donde se dibujará la línea del eje X.
+ * @param {number} xLabelTextAngle - Angulo de las etiquetas en el eje
  * @param {string} color - Color de la línea del eje y las marcas.
  * @param {string} labelSpace - Espacio entre labels y eje
  * @param {number} canvasPadding - Padding del canvas  
  * @param {number} interval - -1: intervalo calculado en base al rango; >0: intervalo usando el valor indicado; 0: se ocupan todos los valores del arreglo
  */
-export async function drawXAxisWithIntervals(context, xValues, xPos = 50, yPos = 50, xLabelTextAngle = 0, color = 'black', labelSpace = 20, canvasPadding = context.canvas.width * 0.02, interval = 0) {
+export async function drawXAxisWithIntervals(context, xValues, xPos = 50, yPos = 50, xLabelTextAngle = 0, color = 'black', labelSpace = 20, canvasPadding = context.canvas.width * 0.02, interval = 0,dataType="numeric") {
   // Ajustar el ancho del canvas teniendo en cuenta x y el padding
   const canvasWidth = context.canvas.width - 2 * canvasPadding;
 
@@ -128,14 +129,19 @@ export async function drawXAxisWithIntervals(context, xValues, xPos = 50, yPos =
   context.stroke();
 
   filteredXValues.forEach((value) => {
-      const tickX = xPos + canvasPadding + (mapValue(value, canvasPadding, canvasWidth, xValues) - startX);
-
+      const tickX = xPos + canvasPadding  + (mapValue(value, canvasPadding, canvasWidth, xValues) - startX);
       // Dibujar la marca (tick)
-      context.moveTo(tickX, yPos + canvasPadding - 5);
+
+      context.moveTo(tickX , yPos + canvasPadding - 5);
       context.lineTo(tickX, yPos + canvasPadding + 5);
       context.stroke();
 
       // Dibujar el número debajo de la marca
+      if(dataType=="date"){
+        const date = new Date(value);
+        // Formatear la fecha como YYYY/MM/DD
+        value = `${date.getUTCFullYear()}/${(date.getUTCMonth() + 1).toString().padStart(2, '0')}/${date.getUTCDate().toString().padStart(2, '0')}`;
+      }
       drawText(context, value, tickX - 5, yPos + labelSpace, 10, color, -xLabelTextAngle);
   });
 }
@@ -159,14 +165,14 @@ export async function drawYAxisWithIntervals(context, yValues, xPos = 50, yPos =
   let filteredYValues;
 
   if (interval === -1) {// Calcula intervalos de acuerdo al rango
-      interval = calculateDynamicInterval(yValues);  console.log(interval)
+      interval = calculateDynamicInterval(yValues);  
       filteredYValues = calculateValuesByInterval(interval,yValues);
   } else if (interval > 0) { // Realiza los intervalos de acuerdo al valor dado
       filteredYValues = calculateValuesByInterval(interval,yValues,canvasHeight);
   } else if (interval === 0) {// Se ocupan todos los valores del arreglo 
       filteredYValues = yValues;
   }
-console.log(filteredYValues)
+
   // Mapear los valores de datos a posiciones en el canvas
   const yCanvasValues = filteredYValues.map(value => mapValue(value, canvasPadding, canvasHeight, yValues));
 
@@ -443,11 +449,13 @@ export async function drawMapDotPlot(canvas, context, mapDataFile, csvFilePath, 
  * @param {String} xColumnName - Nombre de la columna de datos para el eje X
  * @param {String} yColumnName - Nombre de la columna de datos para el eje Y
  * @param {String} sizeColumnName - Nombre de la columna que indica el tamaño de las burbujas
+ * @param {number} minSize - Tamaño mínimo de burbuja
+ * @param {number} maxSize - Tamaño máximo de burbuja
  * @param {Array[String]} infoColumNames - Arreglo que contiene el nombre de las columnas que serán presentadas en la información desplegada al hacer hover
  * @param {String} color - Color de los puntos
  * @param {number} canvasPadding - padding del canvas
  */
-export async function drawMapBubblePlot(canvas, context, mapDataFile, csvFilePath, xColumnName, yColumnName, sizeColumnName, minSize, maxSize, infoColumNames, color="black", canvasPadding = context.canvas.width * 0.02) {
+export async function drawMapBubblePlot(canvas, context, mapDataFile, csvFilePath, xColumnName, yColumnName, sizeColumnName, minSize=1, maxSize = 5, infoColumNames, color="black", canvasPadding = context.canvas.width * 0.02) {
 
   // Carga y adecuación de puntos en el mapa
   const data = await loadCSV(csvFilePath);
@@ -538,6 +546,70 @@ export async function drawHeatMap(canvas, canvasPadding, mapDataFile, csvFilePat
     handleHoverMap(event, canvas, mapData, coloredData, stateNameProperty,linkNameProperty, canvasPadding, bbox, infoColumNames);
   });
 
+}
+
+/**
+ * @param {Canvas} - Canvas
+ * @param {CanvasRenderingContext2D} context - Contexto del Canvas
+ * @param {CSVFilePath} csvFilePath - Ruta al archivo de datos
+ * @param {xColumnName} xColumnName - Nombre de la columna de datos para el eje X
+ * @param {yColumnName} yColumnName - Nombre de la columna de datos para el eje Y
+ * @param {Array[String]} infoColumNames - Arreglo que contiene el nombre de las columnas que serán presentadas en la información desplegada al hacer hover
+ * @param {String} color - Color de la línea
+ * @param {boolean} filledCircles - indicador para rellenar o no los puntos
+ * @param {number} pointRadius - Radio de los puntos a dibujar
+ * @param {number} lineWidth - ancho de la linea
+ * @param {number} canvasPadding - padding del canvas
+ * @param {Object} axesProperties - Objeto que contiene las propiedades definidas para los ejes 
+ * @param {*} events - Arreglo de eventos que serán dibujados como hitos en la serie de tiempo
+ */
+export async function drawTimeSeries(canvas, context, csvFilePath, xColumnName, yColumnName, infoColumNames, color, filledCircles=false, pointRadius=5 , lineWidth, canvasPadding = context.canvas.width * 0.02, axesProperties, events = []) {
+   
+  if (!context) {
+    throw new Error("El contexto no está inicializado.");
+  }
+  
+  // Carga y adecuación de datos
+  var data = await loadCSV(csvFilePath);
+
+  // Convertir las fechas a timestamps y agregar una nueva columna para el timestamp
+  var numericData = data.map(row => {
+    
+    return {
+      ...row,
+      [`${xColumnName}2Numeric`]: new Date(row[xColumnName]).getTime()  // Agregar nueva columna para el timestamp
+    };
+  });
+
+  //Ordenar datos y mapear valores
+  const sortedData = sortData(numericData, `${xColumnName}2Numeric`);
+  let dataWithCanvasValues = mapData2Canvas(context, sortedData, `${xColumnName}2Numeric`, "xCanvas", "x", canvasPadding);
+  dataWithCanvasValues = mapData2Canvas(context, dataWithCanvasValues, yColumnName, "yCanvas", "y", canvasPadding);
+
+  //Dibujar puntos
+  drawPoints(context,dataWithCanvasValues,color,filledCircles,pointRadius);
+
+  //Dibujar serie de tiempo mediante Beziers
+  drawBezierCurve(context,dataWithCanvasValues,color, lineWidth)
+
+  //Dibujar ejes
+  if(axesProperties && Object.keys(axesProperties).length > 0){
+    let xValues = numericData.map(row => row[`${xColumnName}2Numeric`]); 
+    drawXAxisWithIntervals(context, xValues , axesProperties.xPos, axesProperties.yPos, axesProperties.xLabelTextAngle, axesProperties.color, axesProperties.xLabelSpace,canvasPadding, axesProperties.xAxeType,"date");
+
+    let yValues = data.map(row => row[yColumnName]);
+    drawYAxisWithIntervals(context, yValues , axesProperties.xPos, axesProperties.yPos, axesProperties.color, axesProperties.yLabelSpace,canvasPadding, axesProperties.yAxeType);
+  }
+
+  // Evento de hover sobre el canvas
+  canvas.addEventListener('mousemove', function(event) {
+    handleHover(event, canvas, dataWithCanvasValues, infoColumNames, "line", canvasPadding, true);
+  });
+
+  // Dibujar eventos si existen
+  if (events.length > 0) {
+    drawEventsOnPlot(context, sortedData, events, canvasPadding,`${xColumnName}2Numeric`);
+  }
 }
 
 
@@ -674,16 +746,25 @@ function mapXYData2Canvas(context, data, xColumnName, padding) {
  * @param {String} newColumnName - nombre de la nueva columna con el mapeo
  * @param {String} type - Tipo de mapeo ("x" o "y")
  * @param {number} padding - canvas padding 
+ * @param {referenceData} - arreglo con valores de referencia. Ejemplo: data = los valores de eventos en la serie de tiempo;referenceData = toda la serie de tiempo
  * @returns {Array[Object]} - arreglo de datos que incluye la columna con los valores mapeados del canvas
  */
 //Función para mapear los valores de un arreglo de objetos (matriz) a sus valores equivalentes en el canvas
-function mapData2Canvas(context, data, columnName, newColumnName, type, padding) {
+function mapData2Canvas(context, data, columnName, newColumnName, type, padding,referenceData,referenceColumnName) {
 
   let canvasValues;
   if(type=="x"){
     const canvasWidth = context.canvas.width - 2 * padding;
     const xValues = data.map(row => row[columnName]);
-    canvasValues = xValues.map(value => mapValue(value, padding, canvasWidth, xValues));
+
+    if(referenceData){
+      const xReferenceValues = referenceData.map(row => row[referenceColumnName]);
+      canvasValues = xValues.map(value => mapValue(value, padding, canvasWidth, xReferenceValues));
+ 
+    }
+    else{
+      canvasValues = xValues.map(value => mapValue(value, padding, canvasWidth, xValues));
+    }
   }
   else{
     const canvasHeight = context.canvas.height - 2 * padding;
@@ -750,7 +831,7 @@ function calculateDynamicInterval(data) {
   const maxValue = data[data.length - 1];
   const range = maxValue - minValue;
 
-  // Determina el número de intervalos deseado (por ejemplo, 10-15 intervalos)
+  // Determina el número de intervalos deseado (por ejemplo, 10)
   const desiredIntervals = Math.max(5, Math.round(data.length / 10));
 
   // Calcula el intervalo inicial
@@ -763,7 +844,7 @@ function calculateDynamicInterval(data) {
   const fraction = logBase10 - exponent;
   const factor = fraction < 0.301 ? 1 : fraction < 0.699 ? 2 : 5;
   interval = factor * Math.pow(10, exponent);
-  return interval;
+  return interval; 
 }
 
 
@@ -802,7 +883,7 @@ function calculateValuesByInterval(interval, values){
 
 /**
  * 
- * @param {*CanvasRenderingContext2D} context - Contexto
+ * @param {CanvasRenderingContext2D} context - Contexto
  * @param {Array[Object]} dataWithCanvasValues - Arrelo de objetos que contienen los puntos, tamaño y metadatos
  * @param {String} color - Color de las burbujas
  */
@@ -876,7 +957,7 @@ function handleHover(event, canvas, data, infoColumnNames, chartType, canvasPadd
       }
 
       infoOverlay.innerHTML = infoColumnNames.map(columnName => {
-        const value = point[columnName];
+        var value = point[columnName];
         return `${columnName} : ${typeof value === 'number' ? value.toFixed(3) : value}`;
       }).join('<br>');
     }
@@ -1127,6 +1208,157 @@ function handleHoverMap(event, canvas, mapData, coloredData, stateNameProperty, 
     }
   });
 }
+
+
+// Función para dibujar curvas bezier para la serie de tiempo
+/**
+ * 
+ * @param {CanvasRenderingContext2D} context - Contexto del Canvas
+ * @param {Array[Object]} dataWithCanvasValues - Arreglo con valores para la serie de tiempo
+ * @param {String} color - Color de la línea
+ * @param {Number} lineWidth - Grosor de la línea
+ */
+export function drawBezierCurve(context, dataWithCanvasValues,color, lineWidth){
+ 
+  context.strokeStyle = color;
+  context.beginPath();
+  context.lineWidth = lineWidth; // Grosor de linea
+
+  // Mover al primer punto de datos
+  context.moveTo(dataWithCanvasValues[0].xCanvas, dataWithCanvasValues[0].yCanvas);
+
+  // Dibujar líneas a través de los puntos de datos
+  // Dibujar líneas suaves a través de los puntos de datos utilizando Bézier cúbica
+  context.beginPath();
+  context.moveTo(dataWithCanvasValues[0].xCanvas, dataWithCanvasValues[0].yCanvas);
+
+  for (let i = 0; i < dataWithCanvasValues.length - 1; i++) {
+    const currentPoint = dataWithCanvasValues[i];
+    const nextPoint = dataWithCanvasValues[i + 1];
+
+    // Calcular puntos de control
+    const cpX1 = currentPoint.xCanvas + (nextPoint.xCanvas - currentPoint.xCanvas) * 0.5; // Primer punto de control
+    const cpY1 = currentPoint.yCanvas; // Mantener el Y del punto actual
+
+    const cpX2 = currentPoint.xCanvas + (nextPoint.xCanvas - currentPoint.xCanvas) * 0.5; // Segundo punto de control
+    const cpY2 = nextPoint.yCanvas; // Mantener el Y del siguiente punto
+
+    // Dibujar curva Bézier cúbica
+    context.bezierCurveTo(cpX1, cpY1, cpX2, cpY2, nextPoint.xCanvas, nextPoint.yCanvas);
+  }
+
+  // Dibujar la línea final
+  context.stroke();
+
+  // Último segmento directo
+  context.lineTo(dataWithCanvasValues[dataWithCanvasValues.length - 1].xCanvas, dataWithCanvasValues[dataWithCanvasValues.length - 1].yCanvas);
+  context.stroke();
+}
+
+// Función para dibujar eventos en serie de tiempo
+/**
+ * 
+ * @param {CanvasRenderingContext2D} context - Contexto del Canvas
+ * @param {Array[Object]} referenceData - arreglo con todos lo valores de referencia en la serie de tiempo (necesarios para contextualizar las fechas de los eventos).
+ * @param {Array[Object]} events - Arreglo de eventos que serán dibujados como hitos en la serie de tiempo
+ * @param {Number} canvasPadding - Padding del canvas
+ * @param {String} referenceColumnName - Nombre de la columna de referencia de la serie de tiempo
+ */
+function drawEventsOnPlot(context, referenceData, events, canvasPadding,referenceColumnName) {
+
+  const numericData = events.map(row => {
+    return {
+      ...row,
+      startDate: new Date(row.startDate).getTime(),  // Convertir fecha de inicio a timestamp
+      endDate: new Date(row.endDate).getTime()       // Convertir fecha de fin a timestamp
+    };
+  });
+
+  //Mapeamos valores a canvas
+  let mappedData = mapData2Canvas(context, numericData, "startDate", "startCanvas", "x", canvasPadding, referenceData,referenceColumnName);
+  mappedData = mapData2Canvas(context, mappedData, "endDate", "endCanvas", "x", canvasPadding, referenceData,referenceColumnName);
+
+  //Dibujamos eventos
+  mappedData.forEach(event => {
+
+    // Verificar que las fechas sean válidas
+    if (event.startCanvas && event.endCanvas) {  
+      
+      const rectX = event.startCanvas;
+      const rectWidth = (event.endCanvas - event.startCanvas) == 0 ? 1 : event.endCanvas - event.startCanvas  ;
+      const rectHeight = context.canvas.height - canvasPadding * 2; 
+      context.fillStyle = event.color;
+      // Dibujar rectángulo 
+      context.fillRect(rectX, canvasPadding, rectWidth, rectHeight);
+
+      // Dibujar el título del evento en la parte superior
+      const titleX = rectX + rectWidth / 2 - 2 * event.title.length; // Ajustar la posición del texto
+      const titleY = rectHeight + 25;
+      const titleSize =9;
+      drawText(context,event.title, titleX, titleY,titleSize,"black")
+
+      event.titleCoords = {
+        x: titleX,
+        y: titleY - rectHeight + canvasPadding,
+        width: 2 * event.title.length * 8, // Aproximar el ancho del texto (8px por carácter)
+        height: titleSize // Alto del texto en píxeles
+      };
+    }
+  });
+
+   // Manejo del hover para mostrar la descripción del eventocuando el ratón esté sobre el título
+   context.canvas.addEventListener('mousemove', function (event) {
+    const mouseX = event.offsetX;
+    const mouseY = event.offsetY;
+    let isHoveringOverTitle = false;
+
+    // Verificar si el ratón está sobre alguno de los títulos
+    mappedData.forEach(event => {
+      const { titleCoords } = event;
+
+      if (
+        mouseX >= titleCoords.x && mouseX <= titleCoords.x + titleCoords.width &&
+        mouseY  >= titleCoords.y - titleCoords.height && mouseY <= titleCoords.y
+      ) {
+        // Mostrar la descripción 
+        showTooltip(event.desc, mouseX, mouseY); 
+        isHoveringOverTitle = true;
+      }
+    });
+
+    // Si el ratón no está sobre ningún título, ocultar el tooltip
+    if (!isHoveringOverTitle) {
+      hideTooltip();
+    }
+  });
+}
+
+// Función para mostrar descripción tooltip de los eventos
+/**
+ * 
+ * @param {Text} text  - Descripción del evento
+ * @param {Number} x - Posición en x de la descripción 
+ * @param {Number} y - Posición en x de la descripción 
+ */
+function showTooltip(text, x, y) {
+  const tooltip = document.getElementById('eventToolTip');
+  tooltip.style.display = 'block';
+  tooltip.style.left = `${x}px`;
+  tooltip.style.top = `${y}px`;
+  tooltip.textContent = text;
+}
+
+//Función para esconder la descripción de los eventos
+function hideTooltip(){
+  const tooltip = document.getElementById('eventToolTip');
+  tooltip.style.display = 'none';
+}
+
+
+
+
+
+
 
 
 
